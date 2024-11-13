@@ -14,6 +14,7 @@ class spider_1(scrapy.Spider):
                 'type': rooms.xpath('.//span[@class="_19e94678 e0abc2de" and @aria-label="Type"]/text()').extract(),
                 'links': rooms.css('a.d40f2294').attrib['href'],
             }
-        next_page = response.css('a._95dd93c1').attrib['href']
-        if next_page is not None:
-            yield response.follow(next_page, callback=self.parse)
+        next_page = response.css('a[title="Next"]::attr(href)').get()
+        if next_page:
+            next_page_url = response.urljoin(next_page)
+            yield scrapy.Request(next_page_url, callback=self.parse)
