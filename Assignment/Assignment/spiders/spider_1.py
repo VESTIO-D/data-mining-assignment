@@ -11,9 +11,9 @@ class spider_1(scrapy.Spider):
         # item_links = response.css('a.d40f2294::attr(href)').getall()
         # for items in item_links:
         #     yield response.follow(items, callback=self.parse)
-        link = response.css('a.d40f2294[aria-label="Listing link"]::attr(href)').get()
-        if link:
-            absolute_url = response.urljoin(link)
+        link = response.css('a.d40f2294[aria-label="Listing link"]::attr(href)').extract()
+        for links in link:
+            absolute_url = response.urljoin(links)
             yield response.follow(absolute_url, callback=self.parse_item)
         else:
             self.logger.warning(f"No valid link found on {response.url}")
@@ -52,5 +52,5 @@ class spider_1(scrapy.Spider):
             'breadcrumbs':  " > ".join(response.css('a.ebd56459 span._43ad44d9::text').extract()),
             'amenities': response.css('span._7181e5ac::text').extract(),
             'description': "".join(response.css('span._3547dac9 *::text').getall()),
-            'property_image_urls': response.css('img[role="presentation"]::attr(src)').extract()
+            'property_image_urls': response.css('img._5a31e77d.e6a91003[role="presentation"]::attr(src)').extract()
         }
