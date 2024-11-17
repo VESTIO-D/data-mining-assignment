@@ -1,4 +1,9 @@
 import scrapy
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
+from scrapy.http import HtmlResponse
+import time
 
 
 class spider_1(scrapy.Spider):
@@ -7,10 +12,14 @@ class spider_1(scrapy.Spider):
         'https://www.bayut.com/to-rent/property/dubai/'
     ]
 
+    def __init__(self):
+        chrome_options = Options()
+        chrome_options.add_argument("--headless")
+        driver_path = "C:\Program Files (x86)\chromedriver.exe"
+        service = Service(driver_path)
+        self.driver = webdriver.Chrome(service=service, options=chrome_options)
+
     def parse(self, response):
-        # item_links = response.css('a.d40f2294::attr(href)').getall()
-        # for items in item_links:
-        #     yield response.follow(items, callback=self.parse)
         link = response.css('a.d40f2294[aria-label="Listing link"]::attr(href)').extract()
         for links in link:
             absolute_url = response.urljoin(links)
@@ -21,12 +30,12 @@ class spider_1(scrapy.Spider):
             yield scrapy.Request(next_page_url, callback=self.parse)
 
     def parse_item(self, response):
-        # for rooms in response.css("li.a37d52f0"):
-        #     yield {
-        #         'location': rooms.css('h3._4402bd70::text').extract(),
-        #         'type': rooms.xpath('.//span[@class="_19e94678 e0abc2de" and @aria-label="Type"]/text()').extract(),
-        #         'links': rooms.css('a.d40f2294').attrib['href'],
-        #     }
+        self.driver.get(response.url)
+        time.sleep(1)  # Wait for JavaScript to load (adjust as needed)
+
+        # Get the rendered HTML and wrap it in a Scrapy response
+        rendered_html = self.driver.page_source
+        response = HtmlResponse(url=response.url, body=rendered_html, encoding='utf-8')
 
         yield {
             'property_id': response.css('span._2fdf7fc5[aria-label="Reference"]::text').get(),
@@ -46,10 +55,14 @@ class spider_1(scrapy.Spider):
                 'size': response.css('span[aria-label="Area"] span._140e6903 span::text').get()
             },
             'permit_number': response.css('span.e56292b8[aria-label="Permit Number"]::text').get(),
-            'agent_name': response.css('a[aria-label="Agent name"] h2::text, span[aria-label="Agent name"]::text').get(),
-            'primary_image_url':  response.css('img._4a3dac18[aria-label="Cover Photo"]::attr(src)').get(),
-            'breadcrumbs':  " > ".join(response.css('a.ebd56459 span._43ad44d9::text').extract()),
+            'agent_name': response.css(
+                'a[aria-label="Agent name"] h2::text, span[aria-label="Agent name"]::text').get(),
+            'primary_image_url': response.css('img._4a3dac18[aria-label="Cover Photo"]::attr(src)').get(),
+            'breadcrumbs': " > ".join(response.css('a.ebd56459 span._43ad44d9::text').extract()),
             'amenities': response.css('span._7181e5ac::text').extract(),
             'description': "".join(response.css('span._3547dac9 *::text').getall()),
             'property_image_urls': response.css('img._5a31e77d.e6a91003[role="presentation"]::attr(src)').extract()
         }
+
+    def closed(self, reason):
+        self.driver.quit()
