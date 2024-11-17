@@ -34,7 +34,7 @@ class spider_1(scrapy.Spider):
             'purpose': response.css('span._2fdf7fc5[aria-label="Purpose"]::text').get(),
             'type': response.css('span._2fdf7fc5[aria-label="Type"]::text').get(),
             'added_on': response.css('span._2fdf7fc5[aria-label="Reactivated date"]::text').get(),
-            'furnishing': response.css('span._2fdf7fc5[aria-label="Furnishing"]::text').get(),
+            'furnishing': response.css('span._2fdf7fc5[aria-label="Furnishing"]::text').get() or 'NA',
             'price': {
                 'currency': response.css('span.d241f2ab[aria-label="Currency"]::text').get(),
                 'amount': response.css('span._2d107f6e[aria-label="Price"]::text').get()
@@ -43,9 +43,9 @@ class spider_1(scrapy.Spider):
             'bed_bath_size': {
                 'bedrooms': response.css('span._783ab618[aria-label="Beds"] span::text').get(),
                 'bathrooms': response.css('span._783ab618[aria-label="Baths"] span::text').get(),
-                'size': response.css('span._783ab618[aria-label="Area"] span::text').get()
+                'size': response.css('span[aria-label="Area"] span._140e6903 span::text').get()
             },
-            # 'permit_number': response.css('span.e56292b8[aria-label="Permit Number"]::text').get()
+            'permit_number': response.css('span.e56292b8[aria-label="Permit Number"]::text').get(),
             'agent_name': response.css('a[aria-label="Agent name"] h2::text, span[aria-label="Agent name"]::text').get(),
             'primary_image_url':  response.css('img._4a3dac18[aria-label="Cover Photo"]::attr(src)').get(),
             'breadcrumbs':  " > ".join(response.css('a.ebd56459 span._43ad44d9::text').extract()),
